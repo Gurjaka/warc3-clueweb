@@ -14,8 +14,8 @@ import gzip
 
 from .utils import CaseInsensitiveDict
 
-ARC1_HEADER_RE = re.compile('(?P<url>\S*)\s(?P<ip_address>\S*)\s(?P<date>\S*)\s(?P<content_type>\S*)\s(?P<length>\S*)')
-ARC2_HEADER_RE = re.compile('(?P<url>\S*)\s(?P<ip_address>\S*)\s(?P<date>\S*)\s(?P<content_type>\S*)\s(?P<result_code>\S*)\s(?P<checksum>\S*)\s(?P<location>\S*)\s(?P<offset>\S*)\s(?P<filename>\S*)\s(?P<length>\S*)')
+ARC1_HEADER_RE = re.compile('(?P<url>\\S*)\\s(?P<ip_address>\\S*)\\s(?P<date>\\S*)\\s(?P<content_type>\\S*)\\s(?P<length>\\S*)')
+ARC2_HEADER_RE = re.compile('(?P<url>\\S*)\\s(?P<ip_address>\\S*)\\s(?P<date>\\S*)\\s(?P<content_type>\\S*)\\s(?P<result_code>\\S*)\\s(?P<checksum>\\S*)\\s(?P<location>\\S*)\\s(?P<offset>\\S*)\\s(?P<filename>\\S*)\\s(?P<length>\\S*)')
 
 class ARCHeader(CaseInsensitiveDict):
     """

@@ -68,7 +68,7 @@ class WARCHeader(CaseInsensitiveDict):
     }
 
     def __init__(self, headers, defaults=False):
-        self.version = "WARC/1.0"
+        self.version = "WARC/0.18"
         super().__init__(headers)
         if defaults:
             self.init_defaults()
@@ -91,7 +91,7 @@ class WARCHeader(CaseInsensitiveDict):
     def write_to(self, f):
         """Writes this header to a file, in the format specified by WARC.
         """
-        f.write(self.version.encode() + b"\r\n")
+        f.write(self.version.encode() + b"\n")
         for name, value in self.items():
             name = name.title()
             # Use standard forms for commonly used patterns
@@ -99,7 +99,7 @@ class WARCHeader(CaseInsensitiveDict):
             f.write(str(name).encode())
             f.write(b": ")
             f.write(str(value).encode())
-            f.write(b"\r\n")
+            f.write(b"\n")
 
         # Header ends with an extra CRLF
         f.write(b"\r\n")
@@ -338,22 +338,21 @@ class WARCFile:
         return self.fileobj.tell()
 
 class WARCReader:
-    RE_VERSION = re.compile("WARC/(\d+.\d+)\r\n")
-    RE_HEADER = re.compile(r"([a-zA-Z_\-]+): *(.*)\r\n")
-    SUPPORTED_VERSIONS = ["1.0"]
+    RE_VERSION = re.compile("WARC/(\\d+.\\d+)\n")
+    RE_HEADER = re.compile(r"([a-zA-Z_\-]+): *(.*)\n")
+    SUPPORTED_VERSIONS = ["1.0", "0.18"]
 
     def __init__(self, fileobj):
         self.fileobj = fileobj
         self.current_payload = None
 
     def read_header(self, fileobj):
-        version_line = fileobj.readline().decode("utf-8")
-        if not version_line:
-            return None
-
-        m = self.RE_VERSION.match(version_line)
-        if not m:
-            raise IOError("Bad version line: %r" % version_line)
+        m = None
+        while not m:
+            version_line = fileobj.readline().decode("utf-8")
+            if len(version_line) == 0:  # eof
+                return None
+            m = self.RE_VERSION.match(version_line)
         version = m.group(1)
         if version not in self.SUPPORTED_VERSIONS:
             raise IOError("Unsupported WARC version: %s" % version)
@@ -361,49 +360,31 @@ class WARCReader:
         headers = {}
         while True:
             line = fileobj.readline().decode("utf-8")
-            if line == "\r\n": # end of headers
-                break
+            if len(line) == 0:  # eof while reading header ? skip it
+                return None
+            if line == "\n": # end of headers
+                if "Content-Length" in headers: # handle extra newline
+                    break                       # see http://lintool.github.com/Cloud9/docs/content/clue.html#malformed
             m = self.RE_HEADER.match(line)
-            if not m:
-                raise IOError("Bad header line: %r" % line)
-            name, value = m.groups()
-            headers[name] = value
+            if m:
+                name, value = m.groups()
+                headers[name] = value
         return WARCHeader(headers)
 
-    def expect(self, fileobj, expected_line, message=None):
-        line = fileobj.readline().decode("utf-8")
-        if line != expected_line:
-            message = message or "Expected %r, found %r" % (expected_line, line)
-            raise IOError(message)
-
-    def finish_reading_current_record(self):
-        # consume the footer from the previous record
-        if self.current_payload:
-            # consume all data from the current_payload before moving to next record
-            self.current_payload.read()
-            self.expect(self.current_payload.fileobj, "\r\n")
-            self.expect(self.current_payload.fileobj, "\r\n")
-            self.current_payload = None
-
     def read_record(self):
-        self.finish_reading_current_record()
+        self.current_payload = None
         fileobj = self.fileobj
 
         header = self.read_header(fileobj)
         if header is None:
             return None
-
-        self.current_payload = FilePart(fileobj, header.content_length)
-        record = WARCRecord(header, self.current_payload, defaults=False)
+        payload = self.read_payload(fileobj, header.content_length)
+        record = WARCRecord(header, payload, defaults=False)
         return record
 
-    def _read_payload(self, fileobj, content_length):
-        size = 0
-        while size < content_length:
-            chunk_size = min(1024, content_length-size)
-            chunk = fileobj.read(chunk_size)
-            size += chunk_size
-            yield chunk
+    @staticmethod
+    def read_payload(fileobj, content_length):
+        return fileobj.read(content_length)
 
     def __iter__(self):
         record = self.read_record()

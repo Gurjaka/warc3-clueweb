@@ -3,15 +3,15 @@
 from setuptools import setup
 
 setup(
-    name="warc3-wet",
-    version="0.2.3",
-    description="Python library to work with ARC and WARC files",
+    name="warc3-wet-clueweb09",
+    version="0.2.4",
+    description="Python library to work with ARC and WARC files, with fixes for ClueWeb09",
     long_description=open('Readme.rst').read(),
     license='GPLv2',
     author="Anand Chitipothu, Noufal Ibrahim, Ryan Chartier, Jan Pieter Bruins Slot, Almer S. Tigelaar, Willian Zhang",
     author_email="info@archive.org",
-    url="https://github.com/Willian-Zhang/warc3",
-    packages=["warc"],
+    url="https://github.com/seanmacavaney/warc3-clueweb",
+    packages=["warc3_wet_clueweb09"],
     platforms=["any"],
     package_data={'': ["LICENSE", "Readme.rst"]},
     include_package_data=True,

@@ -1,7 +1,15 @@
 warc3-wet: Python3 library to work with WARC and WET files
-==============================================
+==========================================================
 
 Note: This is a fork of the original (now dead) warc repository.
+
+Updated to handle problems with the ClueWeb09_ files.
+
+.. _ClueWeb09: https://lemurproject.org/clueweb09/
+
+Changes are based on this repository_ (which only supports python2)
+
+.. _repository: https://github.com/cdegroc/warc-clueweb/blob/clueweb09/warc/warc.py
 
 WARC (Web ARChive) is a file format for storing web crawls.
 
@@ -54,7 +62,10 @@ Modification
 * Willian Zhang
 
 Change Log
--------
+----------
+0.2.4
+support ClueWeb09
+
 0.2.3
 Support seeking in WARC/WET
 
